@@ -16,9 +16,7 @@ function logMsg($msg) {
     global $logFile;
     $time = date('Y-m-d H:i:s');
     $line = "[$time] $msg\n";
-    // Append to file
     file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
-    // Print to console for GitHub Actions logs
     echo $line;
 }
 
@@ -44,4 +42,16 @@ try {
         exit(1);
     }
 
-    logMsg("Starting Honey's Place i
+    logMsg("Starting Honey's Place inventory sync...");
+
+    $url = "https://honeysplace.com/API/inventory/index.php";
+
+    $opts = [
+        "http" => [
+            "header" => "Authorization: Basic " . base64_encode("$hpUsername:$hpPassword"),
+            "timeout" => 30
+        ]
+    ];
+    $context = stream_context_create($opts);
+
+    $xmlStrin

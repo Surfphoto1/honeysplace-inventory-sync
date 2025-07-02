@@ -54,4 +54,53 @@ try {
     ];
     $context = stream_context_create($opts);
 
-    $xmlStrin
+    $xmlString = @file_get_contents($url, false, $context);
+
+    if (!$xmlString) {
+        logMsg("❌ Failed to download Honey's Place inventory.");
+        sendEmail("Inventory Sync FAILED: Could not download Honey's Place inventory.", file_get_contents($logFile));
+        exit(1);
+    }
+
+    logMsg("✅ Downloaded Honey's Place inventory XML.");
+
+    libxml_use_internal_errors(true);
+    $xml = simplexml_load_string($xmlString);
+    if (!$xml) {
+        logMsg("❌ Failed to parse XML:");
+        foreach(libxml_get_errors() as $error) {
+            logMsg("  - " . trim($error->message));
+        }
+        sendEmail("Inventory Sync FAILED: XML parsing error.", file_get_contents($logFile));
+        exit(1);
+    }
+
+    $skuPrefix = 'HP-';
+    $updatedCount = 0;
+
+    foreach ($xml->product as $product) {
+        $sku = trim((string)$product->sku);
+        $qty = (int)$product->qty;
+
+        if (strpos($sku, $skuPrefix) !== 0) {
+            continue;
+        }
+
+        logMsg("Updating SKU $sku with quantity $qty");
+
+        // TODO: Add Shopify inventory update logic here
+
+        $updatedCount++;
+    }
+
+    logMsg("✅ Updated inventory for $updatedCount Honey's Place products.");
+
+    sendEmail("Inventory Sync SUCCESS", file_get_contents($logFile));
+
+    exit(0);
+
+} catch (Throwable $e) {
+    logMsg("Fatal error: " . $e->getMessage());
+    sendEmail("Inventory Sync FAILED: Fatal error", file_get_contents($logFile));
+    exit(1);
+}

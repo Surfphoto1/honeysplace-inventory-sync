@@ -1,7 +1,9 @@
 name: Honey's Place Inventory Sync
 
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'  # every day at 3:00 AM UTC
+  workflow_dispatch:     # manual trigger too
 
 jobs:
   run-inventory-sync:
@@ -17,4 +19,17 @@ jobs:
           php-version: '8.1'
 
       - name: Run PHP script
+        env:
+          HP_USERNAME: ${{ secrets.HP_USERNAME }}
+          HP_PASSWORD: ${{ secrets.HP_PASSWORD }}
+          SHOPIFY_API_KEY: ${{ secrets.SHOPIFY_API_KEY }}
+          SHOPIFY_API_PASSWORD: ${{ secrets.SHOPIFY_API_PASSWORD }}
+          SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
+          SYNC_NOTIFICATION_EMAIL: ${{ secrets.SYNC_NOTIFICATION_EMAIL }}
         run: php update_inventory.php
+
+      - name: Upload log artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: inventory-sync-log
+          path: inventory_sync_log.txt

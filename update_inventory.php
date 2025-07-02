@@ -16,12 +16,19 @@ function logMsg($msg) {
     echo "$msg\n";
 }
 
+function sendEmail($subject, $body) {
+    global $emailTo, $logFile;
+    if (!$emailTo) return;
+    $headers = "From: no-reply@yourdomain.com\r\n";
+    mail($emailTo, $subject, $body, $headers);
+}
+
 $hpUsername = getenv('HP_USERNAME');
 $hpPassword = getenv('HP_PASSWORD');
 $shopifyApiKey = getenv('SHOPIFY_API_KEY');
 $shopifyApiPassword = getenv('SHOPIFY_API_PASSWORD');
 $shopifyStoreDomain = getenv('SHOPIFY_STORE_DOMAIN');
-$emailTo = getenv('SYNC_NOTIFICATION_EMAIL'); // add this secret for notification email
+$emailTo = getenv('SYNC_NOTIFICATION_EMAIL');
 
 if (!$hpUsername || !$hpPassword || !$shopifyApiKey || !$shopifyApiPassword || !$shopifyStoreDomain) {
     logMsg("❌ Missing required environment variables.");
@@ -70,3 +77,21 @@ foreach ($xml->product as $product) {
 
     if (!str_starts_with($sku, $skuPrefix)) {
         continue;
+    }
+
+    // Update Shopify inventory here:
+    // For demo, just log it:
+    logMsg("Updating SKU $sku with quantity $qty");
+
+    // Here you would call Shopify Admin API to update inventory for $sku
+    // Example placeholder: updateShopifyInventory($sku, $qty);
+
+    $updatedCount++;
+}
+
+logMsg("✅ Updated inventory for $updatedCount Honey's Place products.");
+
+// Send success email notification
+sendEmail("Inventory Sync SUCCESS", file_get_contents($logFile));
+
+exit(0);

@@ -29,9 +29,11 @@ jobs:
         run: php update_inventory.php
 
       - name: List files for debugging
+        if: always()
         run: ls -alh
 
       - name: Upload log artifact
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: inventory-sync-log

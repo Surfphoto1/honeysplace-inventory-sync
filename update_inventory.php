@@ -4,7 +4,8 @@ ini_set('display_errors', 1);
 
 date_default_timezone_set('UTC');
 
-$logFile = 'inventory_sync_log.txt';
+// Use a temp dir guaranteed writable by GitHub Actions runner
+$logFile = sys_get_temp_dir() . '/inventory_sync_log.txt';
 
 function logMsg($msg) {
     global $logFile;
@@ -89,6 +90,9 @@ try {
     logMsg("✅ Updated inventory for $updatedCount Honey's Place products.");
 
     sendEmail("Inventory Sync SUCCESS", file_get_contents($logFile));
+
+    // Copy log file to current directory so artifact uploader can find it
+    copy($logFile, __DIR__ . '/inventory_sync_log.txt');
 
     exit(0);
 } catch (Throwable $e) {

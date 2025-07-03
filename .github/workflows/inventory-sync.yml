@@ -3,7 +3,7 @@ name: Honey's Place Inventory Sync
 on:
   schedule:
     - cron: '0 3 * * *'  # daily at 3:00 AM UTC
-  workflow_dispatch:
+  workflow_dispatch:     # manual trigger
 
 jobs:
   run-inventory-sync:
@@ -18,27 +18,14 @@ jobs:
         with:
           php-version: '8.1'
 
-      - name: Debug: Test API connectivity
+      # ✅ Test Honey’s Place API URL with curl
+      - name: Debug: Curl test Honey's Place API
         env:
           HP_USERNAME: ${{ secrets.HP_USERNAME }}
           HP_PASSWORD: ${{ secrets.HP_PASSWORD }}
         run: |
-          echo "🔍 Testing Honey's Place API connectivity..."
+          echo "Testing Honey's Place API connectivity..."
           curl -I -u "$HP_USERNAME:$HP_PASSWORD" https://honeysplace.com/API/inventory/index.php
-
-      - name: Debug: Download XML for inspection
-        env:
-          HP_USERNAME: ${{ secrets.HP_USERNAME }}
-          HP_PASSWORD: ${{ secrets.HP_PASSWORD }}
-        run: |
-          curl -u "$HP_USERNAME:$HP_PASSWORD" https://honeysplace.com/API/inventory/index.php -o honeysplace_inventory.xml
-          echo "✅ XML downloaded to honeysplace_inventory.xml"
-
-      - name: Upload downloaded XML
-        uses: actions/upload-artifact@v4
-        with:
-          name: honeysplace-raw-xml
-          path: honeysplace_inventory.xml
 
       - name: Run PHP script
         env:

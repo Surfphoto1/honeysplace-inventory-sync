@@ -20,11 +20,14 @@ function logMsg($msg) {
     echo $line;
 }
 
+// Temporarily disable email sending
 function sendEmail($subject, $body) {
-    global $emailTo;
-    if (!$emailTo) return;
-    $headers = "From: no-reply@yourdomain.com\r\n";
-    mail($emailTo, $subject, $body, $headers);
+    // Disabled on GitHub Actions runner to avoid errors
+    // Uncomment and configure if you use SMTP or an API for emails
+    // global $emailTo;
+    // if (!$emailTo) return;
+    // $headers = "From: no-reply@yourdomain.com\r\n";
+    // mail($emailTo, $subject, $body, $headers);
 }
 
 try {
@@ -45,6 +48,7 @@ try {
     logMsg("Starting Honey's Place inventory sync...");
 
     $url = "https://honeysplace.com/API/inventory/index.php";
+    logMsg("Downloading from URL: $url with user $hpUsername");
 
     $opts = [
         "http" => [
@@ -58,7 +62,7 @@ try {
 
     if (!$xmlString) {
         logMsg("❌ Failed to download Honey's Place inventory.");
-        sendEmail("Inventory Sync FAILED: Could not download Honey's Place inventory.", file_get_contents($logFile));
+        // sendEmail("Inventory Sync FAILED: Could not download Honey's Place inventory.", file_get_contents($logFile));
         exit(1);
     }
 
@@ -71,7 +75,7 @@ try {
         foreach(libxml_get_errors() as $error) {
             logMsg("  - " . trim($error->message));
         }
-        sendEmail("Inventory Sync FAILED: XML parsing error.", file_get_contents($logFile));
+        // sendEmail("Inventory Sync FAILED: XML parsing error.", file_get_contents($logFile));
         exit(1);
     }
 
@@ -95,12 +99,12 @@ try {
 
     logMsg("✅ Updated inventory for $updatedCount Honey's Place products.");
 
-    sendEmail("Inventory Sync SUCCESS", file_get_contents($logFile));
+    // sendEmail("Inventory Sync SUCCESS", file_get_contents($logFile));
 
     exit(0);
 
 } catch (Throwable $e) {
     logMsg("Fatal error: " . $e->getMessage());
-    sendEmail("Inventory Sync FAILED: Fatal error", file_get_contents($logFile));
+    // sendEmail("Inventory Sync FAILED: Fatal error", file_get_contents($logFile));
     exit(1);
 }

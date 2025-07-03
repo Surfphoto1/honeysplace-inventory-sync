@@ -2,8 +2,8 @@ name: Honey's Place Inventory Sync
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Run daily at 3:00 AM UTC
-  workflow_dispatch:      # Allow manual trigger
+    - cron: '0 3 * * *'  # daily at 3:00 AM UTC
+  workflow_dispatch:     # manual trigger
 
 jobs:
   run-inventory-sync:
@@ -32,7 +32,7 @@ jobs:
         run: ls -alh
 
       - name: Upload log artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: inventory-sync-log
           path: inventory_sync_log.txt

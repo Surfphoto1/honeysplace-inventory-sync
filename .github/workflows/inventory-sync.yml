@@ -18,6 +18,15 @@ jobs:
         with:
           php-version: '8.1'
 
+      # ✅ Test Honey’s Place API URL with curl
+      - name: Debug: Curl test Honey's Place API
+        env:
+          HP_USERNAME: ${{ secrets.HP_USERNAME }}
+          HP_PASSWORD: ${{ secrets.HP_PASSWORD }}
+        run: |
+          echo "Testing Honey's Place API connectivity..."
+          curl -I -u "$HP_USERNAME:$HP_PASSWORD" https://honeysplace.com/API/inventory/index.php
+
       - name: Run PHP script
         env:
           HP_USERNAME: ${{ secrets.HP_USERNAME }}

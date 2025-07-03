@@ -18,20 +18,14 @@ jobs:
         with:
           php-version: '8.1'
 
-      - name: Debug: Test API connectivity
-        env:
-          HP_USERNAME: ${{ secrets.HP_USERNAME }}
-          HP_PASSWORD: ${{ secrets.HP_PASSWORD }}
+      - name: Debug - Test API connectivity
         run: |
           echo "🔍 Testing Honey's Place API connectivity..."
-          curl -I -u "$HP_USERNAME:$HP_PASSWORD" https://honeysplace.com/API/inventory/index.php
+          curl -I -u "${{ secrets.HP_USERNAME }}:${{ secrets.HP_PASSWORD }}" https://honeysplace.com/API/inventory/index.php
 
-      - name: Debug: Download XML for inspection
-        env:
-          HP_USERNAME: ${{ secrets.HP_USERNAME }}
-          HP_PASSWORD: ${{ secrets.HP_PASSWORD }}
+      - name: Debug - Download XML for inspection
         run: |
-          curl -u "$HP_USERNAME:$HP_PASSWORD" https://honeysplace.com/API/inventory/index.php -o honeysplace_inventory.xml
+          curl -u "${{ secrets.HP_USERNAME }}:${{ secrets.HP_PASSWORD }}" https://honeysplace.com/API/inventory/index.php -o honeysplace_inventory.xml
           echo "✅ XML downloaded to honeysplace_inventory.xml"
 
       - name: Upload downloaded XML

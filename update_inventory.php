@@ -30,6 +30,74 @@ function sendEmail($subject, $body) {
     // mail($emailTo, $subject, $body, $headers);
 }
 
+function findInventoryItemId($sku, $shopifyStoreDomain, $shopifyApiKey, $shopifyApiPassword) {
+    $url = "https://$shopifyStoreDomain/admin/api/2023-04/products.json?limit=250";
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_USERPWD, "$shopifyApiKey:$shopifyApiPassword");
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $data = json_decode($response, true);
+
+    foreach ($data['products'] as $product) {
+        foreach ($product['variants'] as $variant) {
+            if ($variant['sku'] === $sku) {
+                return $variant['inventory_item_id'];
+            }
+        }
+    }
+    return null;
+}
+
+function updateInventoryLevel($inventoryItemId, $quantity, $shopifyStoreDomain, $shopifyApiKey, $shopifyApiPassword) {
+    // First, get inventory levels for this inventory item
+    $url = "https://$shopifyStoreDomain/admin/api/2023-04/inventory_levels.json?inventory_item_ids=$inventoryItemId";
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_USERPWD, "$shopifyApiKey:$shopifyApiPassword");
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $data = json_decode($response, true);
+
+    if (empty($data['inventory_levels'])) {
+        return false;
+    }
+
+    // Update inventory for each location found
+    foreach ($data['inventory_levels'] as $level) {
+        $locationId = $level['location_id'];
+
+        $updateUrl = "https://$shopifyStoreDomain/admin/api/2023-04/inventory_levels/set.json";
+
+        $postData = json_encode([
+            "location_id" => $locationId,
+            "inventory_item_id" => $inventoryItemId,
+            "available" => $quantity,
+        ]);
+
+        $ch = curl_init($updateUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERPWD, "$shopifyApiKey:$shopifyApiPassword");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($postData),
+        ]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+
+        curl_exec($ch);
+        curl_close($ch);
+    }
+
+    return true;
+}
+
 try {
     logMsg("Script started");
 
@@ -92,7 +160,18 @@ try {
 
         logMsg("Updating SKU $sku with quantity $qty");
 
-        // TODO: Add Shopify inventory update logic here
+        $inventoryItemId = findInventoryItemId($sku, $shopifyStoreDomain, $shopifyApiKey, $shopifyApiPassword);
+
+        if ($inventoryItemId) {
+            $success = updateInventoryLevel($inventoryItemId, $qty, $shopifyStoreDomain, $shopifyApiKey, $shopifyApiPassword);
+            if ($success) {
+                logMsg("✅ SKU $sku updated successfully.");
+            } else {
+                logMsg("❌ Failed to update SKU $sku.");
+            }
+        } else {
+            logMsg("❌ SKU $sku not found in Shopify.");
+        }
 
         $updatedCount++;
     }

@@ -1,33 +1,31 @@
-name: Sync Honey's Place Inventory
+name: Honey's Place Inventory Sync
 
 on:
+  schedule:
+    - cron: '0 * * * *' # every hour
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
   sync-inventory:
     runs-on: ubuntu-latest
+    env:
+      SHOPIFY_API_KEY: ${{ secrets.SHOPIFY_API_KEY }}
+      SHOPIFY_API_PASSWORD: ${{ secrets.SHOPIFY_API_PASSWORD }}
+      SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🧰 Set up PHP
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.1'
 
-      - name: ✅ Verify Inventory URL Reachable
-        run: |
-          echo "Checking URL..."
-          curl -I --fail https://www.honeysplace.com/df/IGnJiYVwz6xVfAaR/xml
-
-      - name: 🚀 Run PHP script
+      - name: Run inventory sync script
         run: php update_inventory.php
 
-      - name: 📤 Upload Log File
+      - name: Upload log file
         uses: actions/upload-artifact@v4
         with:
           name: inventory-log
